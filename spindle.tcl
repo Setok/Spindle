@@ -9,6 +9,26 @@ package require uri
 set SpindleDir [file join ~ spindle]
 
 
+@ Class Form {
+    description {
+	Represents the data of a form.
+    }
+}
+
+Class Form
+
+
+Form instproc setField {field content} {
+    my set fields($field) $content
+    return
+}
+
+
+Form instproc getField {field} {
+    return [my set fields($field)]
+}
+
+
 @ Class SpindleWorker { 
     description {
     }
@@ -24,25 +44,29 @@ SpindleWorker proc connectBaseURLs {urlSpec} {
 }
 
 
-@ SpindleWorker instproc respond {} { description {
-  This method handles all responses from the webserver to the client.
-  We implent here "exit", and we return the information about the  actual 
-  request and  user in HTML format for all other requests.
-  <p>This method is an example, how to access on the server side 
-  request specific infomation.
-}}
+@ SpindleWorker instproc respond {} { 
+    description {
+	This method handles all responses from the webserver to the client.
+	We implent here "exit", and we return the information about the  actual 
+	request and  user in HTML format for all other requests.
+	<p>This method is an example, how to access on the server side 
+	request specific infomation.
+    }
+}
+
 SpindleWorker instproc respond {} {
     [self class] instvar baseURLs
-    my instvar resourceName
+    my instvar resourceName method formData
 
     if {$resourceName eq "exit"} {
-    set ::forever 1
-    #my showVars
-    #my set version 1.0;### ???? 
-    #puts stderr HERE
-  }
-
+	set ::forever 1
+	#my showVars
+	#my set version 1.0;### ???? 
+	#puts stderr HERE
+    }
+        
     set splitResource [split $resourceName "/"]
+    
     if {[info exists baseURLs([lindex $splitResource 0])]} {
 	set urlData $baseURLs([lindex $splitResource 0])
 	set class [lindex $urlData 0]
@@ -52,6 +76,27 @@ SpindleWorker instproc respond {} {
 	puts "ctrl: $ctrl, subURL: $subURL"
 	if {[$ctrl procIsConnected $subURL]} {
 	    $ctrl $subURL
+	}
+	puts $method
+	if {$method eq "POST"} {
+	    # Build an object based on the form data, to be passed to the
+	    # form submission handler. The form object will be destroyed 
+	    # on return from this method.
+	    set formOb [Form new -volatile]
+	    foreach field $formData {
+		set name [$field set name]
+		if {[string match "submit-*" $name]} {
+		    set formAction [lindex [split $name "-"] 1]
+		}
+		$formOb setField $name [$field set content]
+		puts "Form field: [$field set name],\
+                      content: [$field set content]"
+	    }
+	    if {[info exists formAction]} {
+		# Only actually call the submission handler if the
+		# suitable submit field was passed.
+		$ctrl $formAction $formOb
+	    }
 	}
 	set view [$ctrl view]
 	set result [$view getHTML]
