@@ -30,6 +30,23 @@ Class Form
 Class SpindleWorker -superclass Httpd::Wrk
 
 
+@ SpindleWorker proc loadWidgets {} {
+    description {
+	Go through the configured Spindle directory and load in all the
+	widgets from there.
+    }
+}
+
+SpindleWorker proc loadWidgets {} {
+    global SpindleDir
+
+    # Load all widget info
+    foreach widgetDir [glob [file join $SpindleDir widgets *]] {
+	source [file join $widgetDir init.tcl]
+    }
+}
+
+
 SpindleWorker proc connectBaseURLs {urlSpec} {
     foreach {url controllerClass} $urlSpec {	
 	my set baseURLs($url) [list $controllerClass]
@@ -179,6 +196,18 @@ namespace eval ::spindle::template {
 	set view [$widget view]
 	return [$view getHTML]
     }
+
+
+    proc foreach {var list body} {
+	set html ""
+	append evalBody {
+	    append html [subst $body]
+	}
+	::foreach $var $list {
+	    append html [subst $body]
+	}
+	return $html
+    }
 }
 
 
@@ -199,7 +228,3 @@ TemplateView instproc getHTML {} {
 }
 
 
-# Load all widget info
-foreach widgetDir [glob [file join $SpindleDir widgets *]] {
-    source [file join $widgetDir init.tcl]
-}
