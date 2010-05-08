@@ -5,28 +5,21 @@ catch {namespace import xotcl::*}
 package require xotcl::comm::httpd 1.1
 package require uri
 
+package provide spindle 0.1
 
 set SpindleDir [file join ~ spindle]
 
 
 @ Class Form {
     description {
-	Represents the data of a form.
+	Represents the data of a form. This is just a non-operational base
+	class for forms. Each form should have its own class which
+	extends this (by sub-classing) and provides XOTcl -parameter style
+	setter/getter methods for the supported fields.       
     }
 }
 
 Class Form
-
-
-Form instproc setField {field content} {
-    my set fields($field) $content
-    return
-}
-
-
-Form instproc getField {field} {
-    return [my set fields($field)]
-}
 
 
 @ Class SpindleWorker { 
@@ -79,23 +72,34 @@ SpindleWorker instproc respond {} {
 	}
 	puts $method
 	if {$method eq "POST"} {
-	    # Build an object based on the form data, to be passed to the
-	    # form submission handler. The form object will be destroyed 
-	    # on return from this method.
-	    set formOb [Form new -volatile]
+	    #set formOb [Form new -volatile]
+	    set fields [list]
 	    foreach field $formData {
 		set name [$field set name]
 		if {[string match "submit-*" $name]} {
 		    set formAction [lindex [split $name "-"] 1]
+		} else {
+		    lappend fields $name [$field set content]
 		}
-		$formOb setField $name [$field set content]
 		puts "Form field: [$field set name],\
                       content: [$field set content]"
 	    }
 	    if {[info exists formAction]} {
 		# Only actually call the submission handler if the
 		# suitable submit field was passed.
-		$ctrl $formAction $formOb
+		if {[$class exists formActions($formAction)]} {
+		    # Get the appropriate Form class. Then build it
+		    # with the form data. The form object will be
+		    # destroyed on return from this method.
+		    # Finally call the controller with the formAction and
+		    # pass it the form.
+		    set formObClass [$class set formActions($formAction)]
+		    set formOb [$formObClass new -volatile]
+		    foreach {field content} $fields {
+			$formOb $field $content
+		    }
+		    $ctrl $formAction $formOb
+		}
 	    }
 	}
 	set view [$ctrl view]
@@ -166,6 +170,7 @@ View abstract instproc getHTML {}
 Class TemplateView -superclass View
 
 
+# Build template commands
 namespace eval ::spindle::template {
     proc widget {name} {
 	variable controller
@@ -194,34 +199,7 @@ TemplateView instproc getHTML {} {
 }
 
 
-@ Httpd h2 {
-  description "Web server with basic authentication using the specialied worker"}
-
-if {[info exists env(USER)]} {
-  set USER "$env(USER)"
-} elseif {[info exists env(USERNAME)]} {
-  set USER "$env(USERNAME)"
-} else {
-  set USER unknown
-}
-if {$::tcl_platform(platform) eq "windows"} {
-  set USER unknown
-}
-
 # Load all widget info
 foreach widgetDir [glob [file join $SpindleDir widgets *]] {
     source [file join $widgetDir init.tcl]
 }
-
-Httpd h2 -port 8081 -root [glob ~/wafe] \
-    -httpdWrk SpindleWorker
-
-#    -mixin BasicAccessControl \
-#    -addRealmEntry test "u1 test $USER test"  -protectDir test "" {} 
-
-puts "#### h2 started"
-
-#
-# and finally call the event loop... 
-#
-vwait forever
