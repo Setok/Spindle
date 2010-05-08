@@ -7,9 +7,10 @@ package require uri
 
 package provide spindle 0.1
 
-set SpindleDir [file join ~ spindle]
+#set SpindleDir [file join ~ spindle]
 
 
+#############################################################################
 @ Class Form {
     description {
 	Represents the data of a form. This is just a non-operational base
@@ -18,16 +19,27 @@ set SpindleDir [file join ~ spindle]
 	setter/getter methods for the supported fields.       
     }
 }
+#############################################################################
 
 Class Form
 
 
-@ Class SpindleWorker { 
+#############################################################################
+@ Class SpindleWorker -superclass Httpd::Wrk { 
     description {
+	This does the main work of processing requests (after the 
+	XOTcl httpd basic processing). It finds suitable controllers,
+	matches them with views, builds appropriate Form objects and
+	calls the connected methods.
     }
 }
+#############################################################################
 
 Class SpindleWorker -superclass Httpd::Wrk
+
+
+# Default location for widgets and files
+SpindleWorker set spindleDir [file join ~ spindle]
 
 
 @ SpindleWorker proc loadWidgets {} {
@@ -38,10 +50,10 @@ Class SpindleWorker -superclass Httpd::Wrk
 }
 
 SpindleWorker proc loadWidgets {} {
-    global SpindleDir
+    my instvar spindleDir
 
     # Load all widget info
-    foreach widgetDir [glob [file join $SpindleDir widgets *]] {
+    foreach widgetDir [glob [file join $spindleDir widgets *]] {
 	source [file join $widgetDir init.tcl]
     }
 }
@@ -56,24 +68,12 @@ SpindleWorker proc connectBaseURLs {urlSpec} {
 
 @ SpindleWorker instproc respond {} { 
     description {
-	This method handles all responses from the webserver to the client.
-	We implent here "exit", and we return the information about the  actual 
-	request and  user in HTML format for all other requests.
-	<p>This method is an example, how to access on the server side 
-	request specific infomation.
     }
 }
 
 SpindleWorker instproc respond {} {
     [self class] instvar baseURLs
     my instvar resourceName method formData
-
-    if {$resourceName eq "exit"} {
-	set ::forever 1
-	#my showVars
-	#my set version 1.0;### ???? 
-	#puts stderr HERE
-    }
         
     set splitResource [split $resourceName "/"]
     
@@ -136,12 +136,12 @@ SpindleWorker instproc respond {} {
 
 Class SpindleController -parameter \
     [list \
-	 [list baseDir $SpindleDir] \
+	 [list baseDir [SpindleWorker set spindleDir]] \
 	 view]
 
 
 ## Configure this for each controller
-SpindleController set baseDir $SpindleDir
+SpindleController set baseDir [SpindleWorker set spindleDir]
 
 
 SpindleController instproc init {} {
