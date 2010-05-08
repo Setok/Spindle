@@ -218,7 +218,8 @@ TemplateView instproc init {template} {
 TemplateView instproc getHTML {} {
     my instvar controller template
 
-    set file [open [file join [$controller baseDir] templates $template] r]
+    #set file [open [file join [$controller baseDir] templates $template] r]
+    set file [open $template r]
     set content [read $file]
     close $file
 
