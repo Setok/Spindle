@@ -83,11 +83,9 @@ SpindleWorker instproc respond {} {
 	array set viewSpec [lindex $urlData 1]
 	set ctrl [$class new]
 	set subURL [lindex $splitResource 1]
-	puts "ctrl: $ctrl, subURL: $subURL"
 	if {[$ctrl procIsConnected $subURL]} {
 	    $ctrl $subURL
 	}
-	puts $method
 	if {$method eq "POST"} {
 	    #set formOb [Form new -volatile]
 	    set fields [list]
@@ -98,8 +96,6 @@ SpindleWorker instproc respond {} {
 		} else {
 		    lappend fields $name [$field set content]
 		}
-		puts "Form field: [$field set name],\
-                      content: [$field set content]"
 	    }
 	    if {[info exists formAction]} {
 		# Only actually call the submission handler if the
@@ -224,7 +220,6 @@ TemplateView instproc getHTML {} {
     close $file
 
     set ::spindle::template::controller $controller
-    puts "templateview getHTML"
     return [namespace eval ::spindle::template [list subst $content]]
 }
 
