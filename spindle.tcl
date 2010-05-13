@@ -7,8 +7,6 @@ package require uri
 
 package provide spindle 0.1
 
-#set SpindleDir [file join ~ spindle]
-
 
 #############################################################################
 @ Class Form {
@@ -38,7 +36,8 @@ Class Form
 Class SpindleWorker -superclass Httpd::Wrk
 
 
-# Default location for widgets and files
+# Default location for widgets and related files. Set this to whatever
+# location you are using.
 SpindleWorker set spindleDir [file join ~ spindle]
 
 

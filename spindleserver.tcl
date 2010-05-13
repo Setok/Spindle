@@ -15,13 +15,19 @@ if {$::tcl_platform(platform) eq "windows"} {
   set USER unknown
 }
 
+
+SpindleWorker set spindleDir [file join $MyDir example]
+
+SpindleWorker loadWidgets
+
+
 @ Httpd h2 {
     description {
 	Web server with basic authentication using the Spindle worker.
     }
 }
 
-Httpd h2 -port 8081 -root [glob ~/wafe] \
+Httpd h2 -port 8081 -root [glob [file join $MyDir webfiles]] \
     -httpdWrk SpindleWorker
 
 #    -mixin BasicAccessControl \
