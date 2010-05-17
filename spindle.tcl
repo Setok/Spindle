@@ -58,10 +58,27 @@ SpindleWorker proc loadWidgets {} {
 }
 
 
+if {0} {
 SpindleWorker proc connectBaseURLs {urlSpec} {
     foreach {url controllerClass} $urlSpec {	
 	my set baseURLs($url) [list $controllerClass]
     }
+}
+}
+
+
+SpindleWorker proc connectBaseURL {url controllerClass} {
+    my set baseURLs($url) $controllerClass
+}
+
+
+SpindleWorker proc connectTemplate {controllerClass template} {
+    my set templates([namespace which -command $controllerClass]) $template
+}
+
+
+SpindleWorker proc getTemplateForController {controllerClass} {
+    return [my set templates([namespace which -command $controllerClass])]
 }
 
 
@@ -71,16 +88,23 @@ SpindleWorker proc connectBaseURLs {urlSpec} {
 }
 
 SpindleWorker instproc respond {} {
-    [self class] instvar baseURLs
+    [self class] instvar baseURLs templates
     my instvar resourceName method formData
         
     set splitResource [split $resourceName "/"]
     
     if {[info exists baseURLs([lindex $splitResource 0])]} {
-	set urlData $baseURLs([lindex $splitResource 0])
-	set class [lindex $urlData 0]
-	array set viewSpec [lindex $urlData 1]
+	set class $baseURLs([lindex $splitResource 0])
+	# Make sure we have the fully qualified name
+	set class [namespace which -command $class]
 	set ctrl [$class new]
+
+	if {[info exists templates($class)]} {
+	    set view [TemplateView new $templates($class)]
+	    $view controller $ctrl
+	    $ctrl view $view
+	}
+
 	set subURL [lindex $splitResource 1]
 	if {[$ctrl procIsConnected $subURL]} {
 	    $ctrl $subURL
@@ -141,10 +165,10 @@ SpindleController set baseDir [SpindleWorker set spindleDir]
 
 SpindleController instproc init {} {
     my instvar baseDir view
-
-    set baseDir [[my info class] set baseDir]
-    set view [TemplateView new [file join $baseDir "view.tml"]]
-    $view controller [self]
+    
+    #set baseDir [[my info class] set baseDir]
+    #set view [TemplateView new [file join $baseDir "view.tml"]]
+    #$view controller [self]
     return [next]
 }
 
@@ -161,8 +185,8 @@ SpindleController instproc procIsConnected {procName} {
 }
 
 
-SpindleController instproc setWidget {name widget} {
-    my set widgets($name) $widget    
+SpindleController instproc setWidget {name widgetClass} {
+    my set widgets($name) $widgetClass
 }
 
 
@@ -187,8 +211,16 @@ namespace eval ::spindle::template {
     proc widget {name} {
 	variable controller
 
-	set widget [$controller getWidget $name]
-	set view [$widget view]
+	set widgetClass [$controller getWidget $name]
+	set ctrl [$widgetClass new -volatile]
+	set template [SpindleWorker getTemplateForController $widgetClass]
+	if {$template ne ""} {
+	    set view [TemplateView new $template]
+	    $view controller $ctrl
+	    $ctrl view $view
+	}	    
+
+	set view [$ctrl view]
 	return [$view getHTML]
     }
 

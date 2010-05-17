@@ -15,7 +15,7 @@ FooController instproc init {} {
     next
     my set name "Setok"
     my connectProcs [list world]
-    my setWidget Bar [BarController new]
+    my setWidget Bar BarController
     return
 }
     
@@ -31,6 +31,10 @@ FooController instproc world {} {
 }
 
 
-SpindleWorker connectBaseURLs {
-    "foo" FooController 
-}
+SpindleWorker connectBaseURL "foo" FooController 
+SpindleWorker connectTemplate FooController \
+    [file join [file dirname [info script]] view.tml]
+
+#SpindleWorker connectBaseURLs {
+#    "foo" FooController 
+#}
