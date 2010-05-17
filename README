@@ -5,15 +5,17 @@ develop.
 
 Some of the features:
 
-* A very effective pattern where URLs are first connected to a controller. Then
-  sub-URLs and POST submissions are linked to methods which handle them. 
-  These methods, and the controller, do not do any rendering. They just
-  provide functionality and set up values for a separate View.
-
 * Proper separation between controllers and views. Controllers know nothing
   about the view attached to it. This offers great possibilities for unit
   testing and various different views and rendering systems. Views only
   expect their controllers to provide an interface they can use.
+
+* A very effective pattern where URLs are first connected to a
+  controller. Then sub-URLs and POST submissions are linked to methods
+  which handle them, possibly altering stored data, or data internal
+  to the controller (ready for the view to render). These methods, and
+  the controller, do not do any rendering. They just provide
+  functionality and set up values for a separate View.
 
 * Based on a widget model. Each controller can contain several widgets and
   their sub-widgets. Have one widget for lists of data, another for
