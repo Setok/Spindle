@@ -1,0 +1,58 @@
+This is a powerful yet simple MVC web framework for Tcl and XOTcl. It 
+reflects many of the aspects of Tcl itself in that it gives the groundwork for
+a wide range of things you might like to do. It gives you the power to
+develop.
+
+Some of the features:
+
+* A very effective pattern where URLs are first connected to a controller. Then
+  sub-URLs and POST submissions are linked to methods which handle them. 
+  These methods, and the controller, do not do any rendering. They just
+  provide functionality and set up values for a separate View.
+
+* Proper separation between controllers and views. Controllers know nothing
+  about the view attached to it. This offers great possibilities for unit
+  testing and various different views and rendering systems. Views only
+  expect their controllers to provide an interface they can use.
+
+* Based on a widget model. Each controller can contain several widgets and
+  their sub-widgets. Have one widget for lists of data, another for
+  help information. Other widgets and their views can then use those 
+  sub-widgets to build up the information displayed to the user. 
+  This offers great opportunities for code reuse and a
+  very clean pattern for building web applications.
+
+* A simple, yet extremely effective template language. While templates 
+  should be kept straightforwards, with the actual functionality in 
+  controllers, they often require control structures and flexibility.
+  Instead of creating Yet Another Language the Spindle template system
+  uses embedded Tcl via a very simple yet powerful mechanism. That
+  environment has some added and replaced Tcl commands for easy use within
+  a HTML environment. Templates can directly query for the data provided
+  by their controllers.
+
+* Simple and powerful form mechanism. Specify the object you want to 
+  have represent the form. It can verify its own values, if deemed
+  necessary. It then gets passed to the matching
+  form method handler in the controller.
+
+* Does not have a built in ORM. You are free to use the storage model you
+  prefer. One option is to use the 'Storm' transparent object storage:
+  http://github.com/Setok/Storm
+
+* Built on top of the XOTcl Httpd. No separate web server required and can
+  be easily embedded into any application.
+
+Note that this is not even beta software yet. It is early alpha at 0.1. While
+it has been tested to work, and is used, do not be surprised if interfaces
+change, even dramatically. It is released for fellow developers to experiment
+with and to submit changes.
+
+You are free to use the source in any way you please, without announcing to
+the authors or anyone else. Of course credit where due is appreciated (but
+not required).
+
+Check spindleserver.tcl for how to run a web server.
+
+Check example for some examples of widgets and how they are tied to the Spindle
+environment.
