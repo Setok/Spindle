@@ -1,7 +1,31 @@
+@ @File {
+    description {
+	Widget for displaying a form for a user to input their name and
+	for "Hello, $name" to be shown. By default 'Setok' is the name, and
+	is shown if the user has not yet submitted the form.
+
+	Additionally this uses the Bar widget to display information about
+	the ultimate driving machine.
+    }
+}
+
+
+#############################################################################
+@ Class FooNameForm -superclass Form -parameter {
+    name {Name inputted by user}
+} {
+    description {
+	Form for collecting the name of a user.
+    }
+}
+#############################################################################
+
 Class FooNameForm -superclass Form -parameter {
     name
 }
 
+
+#############################################################################
 
 Class FooController -superclass SpindleController -parameter {
     name 
@@ -31,10 +55,8 @@ FooController instproc world {} {
 }
 
 
+# Connect this widget to a base URL and specify a template to render.
 SpindleWorker connectBaseURL "foo" FooController 
 SpindleWorker connectTemplate FooController \
     [file join [file dirname [info script]] view.tml]
 
-#SpindleWorker connectBaseURLs {
-#    "foo" FooController 
-#}

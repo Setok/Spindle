@@ -1,3 +1,9 @@
+@ @File {
+    description {
+	A generic list widget. 
+    }
+}
+
 Class ListController -superclass SpindleController -parameter {
     dataSource
 }
