@@ -1,8 +1,11 @@
 @ @File {
     description {
-	Widget for displaying a form for a user to input their name and
+	Example widget for displaying a form for a user to input their name and
 	for "Hello, $name" to be shown. By default 'Setok' is the name, and
 	is shown if the user has not yet submitted the form.
+
+	Also the /foo/world URL is connected to the 'world' method of the
+	controller here, which sets the name to be 'World' instead.
 
 	Additionally this uses the Bar widget to display information about
 	the ultimate driving machine.
@@ -39,7 +42,9 @@ FooController instproc init {} {
     next
     my set name "Setok"
     my connectProcs [list world]
-    my setWidget Bar BarController
+    # Set the sub-widget to be a child of this instance, so it's
+    # automatically destroyed when this is.
+    my setWidget Bar [BarController new -childof [self]]
     return
 }
     

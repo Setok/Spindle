@@ -185,8 +185,8 @@ SpindleController instproc procIsConnected {procName} {
 }
 
 
-SpindleController instproc setWidget {name widgetClass} {
-    my set widgets($name) $widgetClass
+SpindleController instproc setWidget {name widget} {
+    my set widgets($name) $widget
 }
 
 
@@ -211,16 +211,20 @@ namespace eval ::spindle::template {
     proc widget {name} {
 	variable controller
 
-	set widgetClass [$controller getWidget $name]
-	set ctrl [$widgetClass new -volatile]
-	set template [SpindleWorker getTemplateForController $widgetClass]
-	if {$template ne ""} {
-	    set view [TemplateView new $template]
-	    $view controller $ctrl
-	    $ctrl view $view
-	}	    
+	set widget [$controller getWidget $name]
+	if {! [$widget exists view]} {
+	    # Widget has no view set yet, so get view based on a template
+	    # which should have been configured in SpindleWorker
+	    set widgetClass [$widget info class]
+	    set template [SpindleWorker getTemplateForController $widgetClass]
+	    if {$template ne ""} {
+		set view [TemplateView new $template]
+		$view controller $widget
+		$widget view $view
+	    }	    
+	}
 
-	set view [$ctrl view]
+	set view [$widget view]
 	return [$view getHTML]
     }
 
