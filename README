@@ -65,10 +65,10 @@ You are free to use the source in any way you please, without announcing to
 the authors or anyone else. Of course credit where due is appreciated (but
 not required).
 
-Check spindleserver.tcl for how to run a web server.
+Check 'spindleserver.tcl' for how to run a web server.
 
-Check example for some examples of widgets and how they are tied to the Spindle
-environment.
+Check 'example' for some examples of widgets and how they are tied to
+the Spindle environment.
 
 
 Authors:
