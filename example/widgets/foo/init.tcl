@@ -3,6 +3,7 @@
 	Example widget for displaying a form for a user to input their name and
 	for "Hello, $name" to be shown. By default 'Setok' is the name, and
 	is shown if the user has not yet submitted the form.
+	Connects to the /foo URL.
 
 	Also the /foo/world URL is connected to the 'world' method of the
 	controller here, which sets the name to be 'World' instead.
