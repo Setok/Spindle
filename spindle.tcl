@@ -58,15 +58,6 @@ SpindleWorker proc loadWidgets {} {
 }
 
 
-if {0} {
-SpindleWorker proc connectBaseURLs {urlSpec} {
-    foreach {url controllerClass} $urlSpec {	
-	my set baseURLs($url) [list $controllerClass]
-    }
-}
-}
-
-
 SpindleWorker proc connectBaseURL {url controllerClass} {
     my set baseURLs($url) $controllerClass
 }
@@ -153,25 +144,35 @@ SpindleWorker instproc respond {} {
 }
 
 
+#############################################################################
+@ Class SpindleController {
+    description {
+	Base class for all controllers.
+    }
+}
+#############################################################################
+
 Class SpindleController -parameter \
     [list \
 	 [list baseDir [SpindleWorker set spindleDir]] \
 	 view]
 
 
-## Configure this for each controller
 SpindleController set baseDir [SpindleWorker set spindleDir]
 
 
-SpindleController instproc init {} {
-    my instvar baseDir view
-    
-    #set baseDir [[my info class] set baseDir]
-    #set view [TemplateView new [file join $baseDir "view.tml"]]
-    #$view controller [self]
-    return [next]
-}
+@ SpindleController instproc connectProcs {procNames} {
+    description {
+	Connects each procedure listed in 'procNames' of the object so that
+	sub-URLs under the main connected URL of the controller will
+	call the matching procedure.
 
+	So if the object has been connected to /foo and the controller object
+	has a method 'hello' which is connected with connectProcs then
+	/foo/hello will call that method, before calling the view 
+	that was configured for /foo.
+    }
+}
 
 SpindleController instproc connectProcs {procNames} {
     foreach procName $procNames {
