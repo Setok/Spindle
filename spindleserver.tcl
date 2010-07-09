@@ -23,7 +23,7 @@ SpindleWorker loadWidgets
 
 @ Httpd h2 {
     description {
-	Web server with basic authentication using the Spindle worker.
+	Web server using the Spindle worker.
     }
 }
 

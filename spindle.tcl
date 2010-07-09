@@ -29,6 +29,8 @@ Class Form
 	XOTcl httpd basic processing). It finds suitable controllers,
 	matches them with views, builds appropriate Form objects and
 	calls the connected methods.
+
+	An instance of this is matched to an instance of the XOTcl Httpd.
     }
 }
 #############################################################################
@@ -39,6 +41,11 @@ Class SpindleWorker -superclass Httpd::Wrk
 # Default location for widgets and related files. Set this to whatever
 # location you are using.
 SpindleWorker set spindleDir [file join ~ spindle]
+
+
+# Should Spindle provide sessions? Basically a cookie is then set to
+# track a user and a Session object passed to controllers.
+SpindleWorker set sessionManagement false
 
 
 @ SpindleWorker proc loadWidgets {} {
@@ -80,13 +87,17 @@ SpindleWorker proc getTemplateForController {controllerClass} {
 
 SpindleWorker instproc respond {} {
     [self class] instvar baseURLs templates
-    my instvar resourceName method formData
+    my instvar resourceName method formData meta
         
     set splitResource [split $resourceName "/"]
-    
+
+    if {[info exists meta(cookie)]} {
+	cookie::parse4server $meta(cookie)
+    }
+    # See if there is a controller for this URL
     if {[info exists baseURLs([lindex $splitResource 0])]} {
 	set class $baseURLs([lindex $splitResource 0])
-	# Make sure we have the fully qualified name
+	# Make sure we have the fully qualified name for the controller class
 	set class [namespace which -command $class]
 	set ctrl [$class new]
 
