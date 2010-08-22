@@ -1,3 +1,5 @@
+package provide spindle 0.1
+
 package require Tcl 8.4
 package require XOTcl 1.2
 catch {namespace import xotcl::*}
@@ -5,7 +7,7 @@ catch {namespace import xotcl::*}
 package require xotcl::comm::httpd 1.1
 package require uri
 
-package provide spindle 0.1
+source [file join [file dirname [info script]] cookies.tcl]
 
 
 #############################################################################
@@ -48,6 +50,9 @@ SpindleWorker set spindleDir [file join ~ spindle]
 SpindleWorker set sessionManagement false
 
 
+SpindleWorker set hostname [info hostname]
+
+
 @ SpindleWorker proc loadWidgets {} {
     description {
 	Go through the configured Spindle directory and load in all the
@@ -86,14 +91,25 @@ SpindleWorker proc getTemplateForController {controllerClass} {
 }
 
 SpindleWorker instproc respond {} {
-    [self class] instvar baseURLs templates
+    [self class] instvar baseURLs templates sessionManagement sessions
     my instvar resourceName method formData meta
         
     set splitResource [split $resourceName "/"]
 
-    if {[info exists meta(cookie)]} {
-	cookie::parse4server $meta(cookie)
+    if {$sessionManagement} {
+	puts "meta: [array get meta]"
+	if {[info exists meta(cookie)]} {
+	    puts "Cookie: cookie::parse4server $meta(cookie)"
+	}
+    } else {
+	set sessionKey [expr {int(rand() * 4000000000)}]    
+	while {[info exists sessions($sessionKey)]} {
+	    set sessionKey [expr {int(rand() * 4000000000)}]    
+	}
+	set sessions($sessionKey) true
+	set cookies [list [list session $sessionKey]]
     }
+
     # See if there is a controller for this URL
     if {[info exists baseURLs([lindex $splitResource 0])]} {
 	set class $baseURLs([lindex $splitResource 0])
@@ -143,6 +159,17 @@ SpindleWorker instproc respond {} {
 	set view [$ctrl view]
 	set result [$view getHTML]
 	my replyCode 200
+	if {[info exists sessionKey]} {
+	    set cookies [dict create]
+	    set cookies [Cookies::add $cookies \
+			     [dict create -name sessionkey \
+				  -domain [info hostname] \
+				  -path / \
+				  -value $sessionKey \
+				  -expired "1 week"]]
+	    #set cookieDict [dict create session [$sessionKey]
+	    my connection puts "Set-Cookie: [Cookies::format4server $cookies]"
+	}
 	my connection puts "Content-Type: text/html"
 	my connection puts "Content-Length: [string length $result]\n"
 	my connection puts-nonewline $result
