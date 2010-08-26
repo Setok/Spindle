@@ -1,3 +1,5 @@
+package provide spindle 0.1
+
 package require Tcl 8.4
 package require XOTcl 1.2
 catch {namespace import xotcl::*}
@@ -5,7 +7,32 @@ catch {namespace import xotcl::*}
 package require xotcl::comm::httpd 1.1
 package require uri
 
-package provide spindle 0.1
+namespace import ::tcl::mathop::*
+
+namespace eval conf {
+    # Maximum length of a list of fields in a form
+    set maxFieldList 4096
+}
+
+
+## Pad 'list' to 'length' by adding on empty elements to end of list, 
+## until it reaches 'length'. If list is already at that length, or longer,
+## do nothing.
+## 
+## Return new list with padded elements.
+
+proc padListToLength {list length} {
+    if {$length <= [llength $list]} {
+	# List already at that length, or longer. Do nothing.
+	return $list
+    }
+
+    for {set i [llength $list]} {$i < $length} {incr i} {
+	lappend list ""
+    }
+
+    return $list
+}
 
 
 #############################################################################
@@ -89,9 +116,11 @@ SpindleWorker instproc respond {} {
 	# Make sure we have the fully qualified name
 	set class [namespace which -command $class]
 	set ctrl [$class new]
+	$ctrl volatile
 
 	if {[info exists templates($class)]} {
 	    set view [TemplateView new $templates($class)]
+	    $view volatile
 	    $view controller $ctrl
 	    $ctrl view $view
 	}
@@ -115,16 +144,10 @@ SpindleWorker instproc respond {} {
 		# Only actually call the submission handler if the
 		# suitable submit field was passed.
 		if {[$class exists formActions($formAction)]} {
-		    # Get the appropriate Form class. Then build it
-		    # with the form data. The form object will be
-		    # destroyed on return from this method.
-		    # Finally call the controller with the formAction and
-		    # pass it the form.
-		    set formObClass [$class set formActions($formAction)]
-		    set formOb [$formObClass new -volatile]
-		    foreach {field content} $fields {
-			$formOb $field $content
-		    }
+		    set formOb [my buildFormOb \
+				    [$class set formActions($formAction)] \
+				    $fields]
+		    $formOb volatile
 		    $ctrl $formAction $formOb
 		}
 	    }
@@ -143,6 +166,39 @@ SpindleWorker instproc respond {} {
     my close
 }
 
+
+SpindleWorker instproc buildFormOb {formClass fields} {		    
+    set formOb [$formClass new]
+    foreach {field content} $fields {
+	if {[string match "*:#*" $field]} {
+	    # Numbered field. Expect multiple values.
+	    set splitName [split $field ":"]
+	    set field [lindex $splitName 0]
+	    set index [string range [lindex $splitName 1] 1 end]
+	    if { (! [string is integer $index]) ||
+		 ($index > $::conf::maxFieldList)} {
+		continue
+	    }
+	    if {![info exists listFields($field)]} {
+		set listFields($field) [list]
+	    }
+
+	    set listFields($field) \
+		[padListToLength $listFields($field) [+ $index 1]]
+	    lset listFields($field) $index $content
+	} else {
+	    $formOb $field $content
+	}
+    }
+
+    # Set values for list fields
+    foreach field [array names listFields] {
+	$formOb $field $listFields($field)
+    }
+
+    return $formOb
+}
+    
 
 #############################################################################
 @ Class SpindleController {
