@@ -167,6 +167,42 @@ SpindleWorker instproc respond {} {
 }
 
 
+@ SpindleWorker instproc buildFormOb {
+    formClass {
+	The XOTcl class of the form to create (presumably a subclass of
+	Form).
+    }
+    fields {
+	Key-value list of the form's field keys and values.
+    }
+} {
+    description {
+	Creates and initialises a Form object, based on 'formClass', and
+	sets the values of the form by accessing the form parameters.
+
+	Each value from the 'fields' argument
+	will be set in the Form object (created from formClass) with its
+	matching key (using [$formOb $key $value]). Thus each key is
+	assumed to have a matching setter.
+
+	If the key has a ":#" in it,
+	the field is assumed to be one part of a list of values, all 
+	being part of the same field. In that case everything up until 
+	the ":" is the name of the field, and everything after "#" should
+	be an integer describing the index to set the value to. Indexing
+	starts from 0.
+
+	So if 'fields' has the following: 
+	{email:#0 foo@bar.com email:#1 242@front.com email:#2 test@example.com}
+	then in the Form object the "email" parameter will be set to the 
+	following:
+	{foo@bar.com 242@front.com test@example.com}
+
+	In the 'fields' argument these numbered fields do not have to be
+	in the right order.
+    }
+}
+
 SpindleWorker instproc buildFormOb {formClass fields} {		    
     set formOb [$formClass new]
     foreach {field content} $fields {
