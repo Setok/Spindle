@@ -3,11 +3,12 @@ package provide spindle 0.1
 package require Tcl 8.4
 package require XOTcl 1.2
 catch {namespace import xotcl::*}
+namespace import ::tcl::mathop::*
 
 package require xotcl::comm::httpd 1.1
 package require uri
-
-namespace import ::tcl::mathop::*
+package require fishpool.trycatch 1.0
+namespace import ::trycatch::*
 
 namespace eval conf {
     # Maximum length of a list of fields in a form
@@ -85,8 +86,37 @@ SpindleWorker proc loadWidgets {} {
 }
 
 
-SpindleWorker proc connectBaseURL {url controllerClass} {
+@ SpindleWorker proc connectBaseURL {
+    url {
+	Top URL path to connect to. 
+	Shouldn't contain leading and following slash.
+    }
+    controllerClass {Controller class that manages the URL}
+} {
+    description {
+	Connects a base URL to a Controller class which will manage that
+	URl.
+    }
+}
+
+SpindleWorker proc connectBaseURL {url controllerClass} {    
+    # Two-way mapping between url and controller.
     my set baseURLs($url) $controllerClass
+    my set baseControllers($controllerClass) $url
+}
+
+
+@ SpindleWorker proc urlForController {
+    controllerClass {Controller class}
+} {
+    description {
+	Returns the URL (without leading and following slash) that is managed
+	by the given Controller class.
+    }
+}
+
+SpindleWorker proc urlForController {controllerClass} {
+    return [my set baseControllers($controllerClass)]
 }
 
 
@@ -115,7 +145,13 @@ SpindleWorker instproc respond {} {
 	set class $baseURLs([lindex $splitResource 0])
 	# Make sure we have the fully qualified name
 	set class [namespace which -command $class]
-	set ctrl [$class new]
+
+	# See if constructor needs arguments, which will be picked from
+	# the URL path, one argument at a time.
+	set initArgLength [llength [$class info instargs init]]
+	set initArgs [lrange $splitResource 1 $initArgLength]
+	set subURL [lindex $splitResource [+ $initArgLength 1]]
+	set ctrl [$class new [concat [list -init] $initArgs]]
 	$ctrl volatile
 
 	if {[info exists templates($class)]} {
@@ -126,6 +162,8 @@ SpindleWorker instproc respond {} {
 	}
 
 	set subURL [lindex $splitResource 1]
+
+	try {
 	if {[$ctrl procIsConnected $subURL]} {
 	    $ctrl $subURL
 	}
@@ -158,6 +196,17 @@ SpindleWorker instproc respond {} {
 	my connection puts "Content-Type: text/html"
 	my connection puts "Content-Length: [string length $result]\n"
 	my connection puts-nonewline $result
+	} catch Redirect e {
+	    set url "/"
+	    append url [[self class] urlForController $e(controller)]
+	    if {[info exists e(call)]} {
+		append url "/" $e(call)
+	    }
+	    my replyCode 302 location $url
+	    #my replyCode 200
+	    #my connection puts "Content-Type: text/plain\n"
+	    #my connection puts-nonewline "redirect"
+	}
     } else {
 	my replyCode 404
 	my connection puts "\n"
@@ -296,9 +345,6 @@ Class View -parameter {
 View abstract instproc getHTML {}
 
 
-Class TemplateView -superclass View
-
-
 # Build template commands
 namespace eval ::spindle::template {
     proc widget {name} {
@@ -334,6 +380,8 @@ namespace eval ::spindle::template {
     }
 }
 
+
+Class TemplateView -superclass View
 
 TemplateView instproc init {template} {
     my set template $template
