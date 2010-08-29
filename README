@@ -71,6 +71,20 @@ Check 'example' for some examples of widgets and how they are tied to
 the Spindle environment.
 
 
+Dependencies:
+
+* Fishpool's Tcl codebase "Fisk-Tcl" should appear in one of the directories
+listed in TCLLIBPATH, or as a directory in the directory where Spindle is. I
+tend to just symlink the directory in. Available from:
+https://chiselapp.com/user/Setok/repository/Fisk-Tcl/home
+
+* XOTcl 1.6 - http://www.xotcl.org/
+
+* Tcl 8.5 - http://www.tcl.tk/
+
+* Tcllib
+
+
 Authors:
 
 Kristoffer Lawson, setok@scred.com

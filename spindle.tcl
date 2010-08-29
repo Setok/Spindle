@@ -1,7 +1,8 @@
 package provide spindle 0.1
 
-package require Tcl 8.4
-package require XOTcl 1.2
+lappend auto_path [file dirname [info script]]
+package require Tcl 8.5
+package require XOTcl 1.6
 catch {namespace import xotcl::*}
 namespace import ::tcl::mathop::*
 
