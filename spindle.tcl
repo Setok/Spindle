@@ -133,6 +133,59 @@ SpindleWorker proc getTemplateForController {controllerClass} {
 
 @ SpindleWorker instproc respond {} { 
     description {
+	This matches HTTP requests to controllers and views.
+
+	It works by taking the first part of the URL path (following host
+	name) and checks to see if a controller was connected to that path
+	(with the connectBaseURL call). It then instantiates that
+	controller. If the controller's constructor requires arguments,
+	these are taken from the next parts of the URL path, one at a
+	time.
+
+	So if the "/person" URL was connected to PersonController, and
+	PersonController's [init] requires one argument 'name', then
+	"/person/Spock" would create a PersonController instance, with 'Spock'
+	as the name argument.
+
+	After this, the next part of the URL path, if there, is checked to 
+	see if
+	it matches a connected method of the PersonController (with
+        [connectProcs] in Controller). If so, this method is called.
+	
+	So "/person/Spock/delete" would, after instantiation, attempt to
+	call the [delete] method of a PersonController object.
+
+	If the request was a POST, then the 'name' of the form's submit
+	field is used to call the matching method on PersonController, such
+	that a name of "submit-create" would match the [create] method on
+	PersonController. The PersonController's 'formActions' array is
+	used to find a matching form class (in this case, one matching
+        "create"), which is initialised and set with the POST data
+        (see [buildFormOb]). This is then passed to the method discovered
+        above.
+
+	If, at any time, one of these methods throws a "Redirect" 
+	(using Fishpool's try-catch package), then a HTTP redirect is
+	caused. The Redirect exception should have at least one option set,
+	"controller", which is the Controller class we want to redirect to.
+	If the exception contains the option "init" then that contains a
+	list of arguments expected to be passed to the matching Controller's
+	constructor. If it contains the option "call" then that is a method
+	of the Controller to call after initialisation (these are all
+	mapped into the target URL of the redirection).
+
+	Finally, if no redirection occurs, and no error conditions arise,
+	the View is initialised, based on a mapping between the Controller
+	and a TemlateView, using [connectTemplate]. The View has its 
+	controller set to the controller discovered in URL matching and the
+	[getHTML] method of that TemplateView is called, thus receiving
+	the HTML from that template, possibly modified by data provided
+	by the controller, which is available to the template via the
+	$controller variable.
+
+	The setup of [connectBaseURL] and [connectTemplate] should be done
+	in the initialisation file of the widget/controller, which is
+	loaded with the call to [loadWidgets].
     }
 }
 
@@ -207,9 +260,6 @@ SpindleWorker instproc respond {} {
 		append url "/" $e(call)
 	    }
 	    my replyCode 302 location $url
-	    #my replyCode 200
-	    #my connection puts "Content-Type: text/plain\n"
-	    #my connection puts-nonewline "redirect"
 	}
     } else {
 	my replyCode 404
