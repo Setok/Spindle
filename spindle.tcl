@@ -200,6 +200,9 @@ SpindleWorker instproc respond {} {
 	} catch Redirect e {
 	    set url "/"
 	    append url [[self class] urlForController $e(controller)]
+	    if {[info exists e(init)]} {
+		append url "/" [join $e(init) "/"]
+	    }
 	    if {[info exists e(call)]} {
 		append url "/" $e(call)
 	    }
