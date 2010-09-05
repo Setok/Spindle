@@ -253,11 +253,12 @@ namespace eval Cookies {
     	    foreach k {comment domain max-age path expires} {
     		if {[dict exists $cdict -$k]} {
     		    set v [dict get $cdict -$k]
-    		    if {![string is alnum -strict $v]} {
-    			lappend cookie "$k=\"$v\""
-    		    } else {
-    			lappend cookie "$k=$v"
-    		    }
+		    lappend cookie "$k=$v"
+    		    #if {![string is alnum -strict $v]} {
+		    #	lappend cookie "$k=\"$v\""
+    		    #} else {
+		    #	lappend cookie "$k=$v"
+    		    #}
     		}
     	    }
 

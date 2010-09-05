@@ -280,7 +280,6 @@ SpindleWorker instproc respond {} {
 	    set cookies [dict create]
 	    set cookies [Cookies::add $cookies \
 			     [dict create -name sessionkey \
-				  -domain [info hostname] \
 				  -path / \
 				  -value $sessionKey \
 				  -expired "1 week"]]
