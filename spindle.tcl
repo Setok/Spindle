@@ -77,7 +77,7 @@ SpindleWorker set spindleDir [file join ~ spindle]
 
 # Should Spindle provide sessions? Basically a cookie is then set to
 # track a user and a Session object passed to controllers.
-SpindleWorker set sessionManagement false
+SpindleWorker set sessionManagement true
 
 
 SpindleWorker set hostname [info hostname]
@@ -211,15 +211,16 @@ SpindleWorker instproc respond {} {
     if {$sessionManagement} {
 	puts "meta: [array get meta]"
 	if {[info exists meta(cookie)]} {
-	    puts "Cookie: cookie::parse4server $meta(cookie)"
-	}
-    } else {
-	set sessionKey [expr {int(rand() * 4000000000)}]    
-	while {[info exists sessions($sessionKey)]} {
+	    puts "raw cookies: $meta(cookie)"
+	    puts "Cookie: [Cookies::parse4server $meta(cookie)]"
+	} else {
 	    set sessionKey [expr {int(rand() * 4000000000)}]    
+	    while {[info exists sessions($sessionKey)]} {
+		set sessionKey [expr {int(rand() * 4000000000)}]    
+	    }
+	    set sessions($sessionKey) true
+	    set cookies [list [list session $sessionKey]]
 	}
-	set sessions($sessionKey) true
-	set cookies [list [list session $sessionKey]]
     }
 
     # See if there is a controller for this URL
@@ -284,7 +285,8 @@ SpindleWorker instproc respond {} {
 				  -value $sessionKey \
 				  -expired "1 week"]]
 	    #set cookieDict [dict create session [$sessionKey]
-	    my connection puts "Set-Cookie: [Cookies::format4server $cookies]"
+	    my connection puts \
+		"Set-Cookie: [lindex [Cookies::format4server $cookies] 0]"
 	}
 	my connection puts "Content-Type: text/html"
 	my connection puts "Content-Length: [string length $result]\n"
