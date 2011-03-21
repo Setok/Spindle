@@ -1,4 +1,4 @@
-package provide spindle 0.1
+package provide spindle 0.1.1
 
 lappend auto_path [file dirname [info script]]
 package require Tcl 8.5
@@ -400,7 +400,10 @@ View abstract instproc getHTML {}
 
 
 # Build template commands
-namespace eval ::spindle::template {
+namespace eval ::spindle::templates {
+    # This should be set before template evaluation
+    set controller ""
+
     proc widget {name} {
 	variable controller
 
@@ -438,19 +441,38 @@ namespace eval ::spindle::template {
 Class TemplateView -superclass View
 
 TemplateView instproc init {template} {
+    my instvar namespace
+
     my set template $template
+    # Create a namespace where the template code can be evaluated.
+    # Each template gets its own namespace for code evaluation so as not to
+    # mess up variables etc from other templates.
+    set nsID [string map {":" "_"} [self]]    
+    set namespace "::spindle::templates::$nsID"
+    namespace eval $namespace {
+	namespace path "::spindle::templates"
+    }    
 }
 
 TemplateView instproc getHTML {} {
-    my instvar controller template
+    my instvar controller template namespace
 
     #set file [open [file join [$controller baseDir] templates $template] r]
     set file [open $template r]
     set content [read $file]
     close $file
 
-    set ::spindle::template::controller $controller
-    return [namespace eval ::spindle::template [list subst $content]]
+    # Set the controller variable for the evaluating namespace
+    set ${namespace}::controller $controller
+    # Set the controller for where many template commands will be 
+    # evaluated. Store the currently set one and set it back after
+    # finishing with this 'stack'.
+    set oldNsCtrler $::spindle::templates::controller
+    set ::spindle::templates::controller $controller
+    set r [namespace eval $namespace [list subst $content]]
+    set ::spindle::templates::controller $oldNsCtrler
+    
+    return $r
 }
 
 
